@@ -176,13 +176,9 @@ curl "http://localhost:2500/api?server=netease&type=search&id=起风了"
 
 ## 🔧 配置
 
-### 环境变量
+### 数据库配置
 
-创建 `.env` 文件（可选）：
-
-```env
-# 服务端口
-PORT=2500
+如果需要使用 MySQL 存储统计数据，请配置数据库连接信息。不配置则默认使用文件存储（`data/api_stats.json`）。
 
 # 数据库配置（可选，不配置则使用文件存储）
 DB_HOST=localhost
@@ -190,14 +186,6 @@ DB_PORT=3306
 DB_USER=root
 DB_PASSWORD=your_password
 DB_NAME=meting_api
-
-# 运行环境
-RUNTIME=node  # node, deno, vercel
-```
-
-### 数据库配置
-
-如果需要使用 MySQL 存储统计数据，请配置数据库连接信息。不配置则默认使用文件存储（`data/api_stats.json`）。
 
 数据库表会自动创建，包含以下字段：
 - 总请求数
