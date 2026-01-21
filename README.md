@@ -276,7 +276,7 @@ npm run build:all
 
 ## 🙏 致谢
 
-本项目基于 [Meting](https://github.com/xizeyoupan/Meting-API) 项目，使用 JavaScript 重写并增强。
+本项目基于 [xizeyoupan/Meting](https://github.com/xizeyoupan/Meting-API) 项目，使用 JavaScript 重写并增强。
 
 ## ⚠️ 免责声明
 
