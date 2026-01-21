@@ -5,7 +5,7 @@
 
 [![License](https://img.shields.io/badge/license-MIT-blue.svg)](LICENSE)
 [![Node.js Version](https://img.shields.io/badge/node-%3E%3D18.0.0-brightgreen.svg)](https://nodejs.org/)
-[![Version](https://img.shields.io/badge/version-1.1.2-orange.svg)](package.json)
+[![Version](https://img.shields.io/badge/version-1.5.0-orange.svg)](package.json)
 
 一个强大的音乐 API 服务，支持多个音乐平台的数据获取，包括网易云音乐、QQ音乐、Spotify 和 YouTube Music。
 
