@@ -55,8 +55,8 @@
 
 ```bash
 # 克隆项目
-git clone <repository-url>
-cd meting-backend-js
+git clone https://github.com/chuyegzs/Meting-UI-API.git
+cd Meting-UI-API
 
 # 安装依赖
 npm install
