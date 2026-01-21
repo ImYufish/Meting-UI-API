@@ -174,13 +174,12 @@ curl "http://localhost:2500/api?server=netease&type=search&id=起风了"
 }
 ```
 
-## 🔧 配置
+# 🔧 配置
 
-### 数据库配置
+## 数据库配置（项目根目录/mysql.js）（可选，不配置则使用文件存储）
 
 如果需要使用 MySQL 存储统计数据，请配置数据库连接信息。不配置则默认使用文件存储（`data/api_stats.json`）。
 
-# 数据库配置（可选，不配置则使用文件存储）
 ```mysql.js文件
 DB_HOST=localhost
 DB_PORT=3306
@@ -287,6 +286,5 @@ npm run build:all
 
 如有问题或建议，请通过 Issue/Q群 联系。
 
-有时间我再写完，我是懒人，不知道啥时候会更新，目前还在更新中
 <img width="1672" height="1002" alt="9ab2d69381576467e8f6348eed8870c3" src="https://cloud.chuyel.top/f/qx9kFl/05f5930cd2175434f52a66354d494c5c.png" />
 交流群：1048889481（记得点Star）
