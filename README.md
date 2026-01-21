@@ -187,6 +187,7 @@ DB_PORT=3306
 DB_USER=root
 DB_PASSWORD=your_password
 DB_NAME=meting_api
+```
 
 数据库表会自动创建，包含以下字段：
 - 总请求数
