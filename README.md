@@ -254,8 +254,8 @@ npm run build:all
 |------|------|
 | `/` | 首页，显示 API 文档 |
 | `/api` | 核心 API 端点 |
-| `/stats` | 统计页面（HTML） |
-| `/stats/json` | 统计数据（JSON） |
+| `/stats` | 统计页面 |
+| `/stats/json` | 统计数据 |
 | `/health` | 健康检查 |
 | `/docs` | API 文档 |
 | `/test` | 测试端点 |
