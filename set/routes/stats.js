@@ -1,13 +1,6 @@
-/**
- * 统计路由模块
- */
-
 import { isVercel } from '../config/database.js';
 import { getApiStats, getApiStatsAsync } from '../services/stats.js';
 
-/**
- * 统计信息处理器
- */
 export const statsHandler = async (c) => {
     if (isVercel) {
         return c.json({
@@ -32,9 +25,6 @@ export const statsHandler = async (c) => {
     }
 };
 
-/**
- * 注册统计路由
- */
 export const registerStatsRoutes = (app) => {
     app.get('/stats', statsHandler);
     app.get('/stats/json', statsHandler);

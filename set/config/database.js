@@ -1,14 +1,7 @@
-/**
- * 数据库配置模块
- */
-
-// 检测是否是 Vercel 环境
 export const isVercel = !!(process.env.VERCEL || process.env.VERCEL_ENV || process.env.NEXT_PUBLIC_VERCEL_ENV);
 
-// 统计数据存储文件路径
 export const STATS_FILE = './stats.json';
 
-// Meting 配置
 export const metingConfig = {
     url: process.env.METING_URL || '',
     token: process.env.METING_TOKEN || 'token',
@@ -19,13 +12,9 @@ export const metingConfig = {
     }
 };
 
-// 数据库配置
 let DB_CONFIG;
-
-// MySQL 模块
 let mysql = null;
 
-// 异步初始化配置
 const initConfig = async () => {
     if (isVercel) {
         const hasHost = process.env.CHUYE_MYSQL_HOST;
@@ -60,7 +49,6 @@ const initConfig = async () => {
     }
 };
 
-// 初始化MySQL模块
 const initMySQL = async () => {
     try {
         mysql = (await import('mysql2/promise')).default;
@@ -70,7 +58,6 @@ const initMySQL = async () => {
     }
 };
 
-// 初始化
 await initConfig();
 await initMySQL();
 

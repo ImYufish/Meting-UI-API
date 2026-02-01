@@ -1,15 +1,9 @@
-/**
- * 文件操作服务模块
- */
-
 import fs from 'fs/promises';
 import { existsSync } from 'fs';
 import { STATS_FILE } from '../config/database.js';
 import { getBeijingDateString } from '../utils/time.js';
 
-// 文件操作函数
 export const fileOperations = {
-    // 从本地文件加载统计数据
     loadStats: async () => {
         if (!existsSync(STATS_FILE)) return null;
         
@@ -33,7 +27,6 @@ export const fileOperations = {
         }
     },
 
-    // 保存统计数据到本地文件
     saveStats: async (apiStats) => {
         try {
             await fs.writeFile(STATS_FILE, JSON.stringify(apiStats, null, 2), 'utf8');
@@ -45,6 +38,5 @@ export const fileOperations = {
         }
     },
 
-    // 检查统计文件是否存在
     exists: () => existsSync(STATS_FILE)
 };

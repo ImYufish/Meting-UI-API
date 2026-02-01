@@ -1,9 +1,7 @@
 import { serve } from '@hono/node-server'
 import app, { initialize, PORT, getLocalIP } from './app.js'
 
-// 启动服务器
 const startServer = async () => {
-    // 先初始化应用
     await initialize();
     
     const localIP = getLocalIP();
@@ -19,7 +17,6 @@ const startServer = async () => {
         console.log(`📊 统计页面: http://localhost:${info.port}/stats\n`);
     });
 
-    // 优雅关闭处理
     let isShuttingDown = false;
 
     const shutdown = async () => {

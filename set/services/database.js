@@ -1,20 +1,12 @@
-/**
- * 数据库操作服务模块
- */
-
 import { DB_CONFIG, mysql } from '../config/database.js';
 
-// 数据库连接池
 let dbPool = null;
 let useMySQL = false;
 
-// 获取数据库连接池
 export const getDbPool = () => dbPool;
 
-// 获取是否使用MySQL
 export const isUsingMySQL = () => useMySQL;
 
-// 初始化数据库表
 const initDatabaseTables = async () => {
     if (!dbPool) return;
 
@@ -52,7 +44,6 @@ const initDatabaseTables = async () => {
     }
 };
 
-// 初始化MySQL连接
 export const initMySQL = async () => {
     if (!mysql) return false;
 
@@ -87,7 +78,6 @@ export const initMySQL = async () => {
     }
 };
 
-// 关闭数据库连接
 export const closeDatabase = async () => {
     if (dbPool) {
         try {
@@ -101,24 +91,17 @@ export const closeDatabase = async () => {
     }
 };
 
-// 解析数据库值
 const parseValue = (rows) => {
     const value = rows[0]?.stat_value;
     if (!value) return null;
     return typeof value === 'string' ? JSON.parse(value) : value;
 };
 
-/**
- * 安全获取值，防止 undefined
- */
 const safeValue = (val, defaultVal = null) => {
     if (val === undefined) return defaultVal;
     return val;
 };
 
-/**
- * 安全的 JSON 字符串化，处理 undefined
- */
 const safeStringify = (obj) => {
     return JSON.stringify(obj, (key, value) => {
         if (value === undefined) return null;
@@ -126,9 +109,6 @@ const safeStringify = (obj) => {
     });
 };
 
-/**
- * 获取当前日期字符串
- */
 const getDateString = () => {
     return new Date().toLocaleDateString('zh-CN', { 
         timeZone: 'Asia/Shanghai',
@@ -138,9 +118,6 @@ const getDateString = () => {
     }).replace(/\//g, '-');
 };
 
-/**
- * 获取当前周字符串
- */
 const getWeekString = () => {
     const now = new Date(new Date().toLocaleString('en-US', { timeZone: 'Asia/Shanghai' }));
     const year = now.getFullYear();
@@ -150,17 +127,12 @@ const getWeekString = () => {
     return `${year}-W${String(weekNumber).padStart(2, '0')}`;
 };
 
-/**
- * 获取当前月字符串
- */
 const getMonthString = () => {
     const now = new Date(new Date().toLocaleString('en-US', { timeZone: 'Asia/Shanghai' }));
     return `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}`;
 };
 
-// 数据库操作函数
 export const dbOperations = {
-    // 从数据库加载统计数据
     loadStats: async () => {
         if (!dbPool) return null;
 
@@ -214,14 +186,12 @@ export const dbOperations = {
         }
     },
 
-    // 保存统计数据到数据库
     saveStats: async (apiStats) => {
         if (!dbPool) return false;
 
         try {
             const now = new Date().toISOString();
             
-            // 确保所有值都不是 undefined
             const metadata = {
                 lastUpdated: now,
                 lastResetDate: safeValue(apiStats.lastResetDate, getDateString()),
@@ -255,7 +225,6 @@ export const dbOperations = {
         }
     },
 
-    // 记录API请求日志
     logApiRequest: async (endpoint, method, statusCode, responseTime, ip, userAgent) => {
         if (!dbPool) return;
         
@@ -276,7 +245,6 @@ export const dbOperations = {
         }
     },
 
-    // 获取分析数据
     getAnalytics: async () => {
         if (!dbPool) return null;
         
@@ -317,4 +285,3 @@ export default {
     closeDatabase,
     dbOperations
 };
-

@@ -1,16 +1,6 @@
-/**
- * 主页模板
- * 生成主页HTML内容
- */
-
 import { isVercel } from '../config/database.js';
 import config from '../../src/config.js';
 
-/**
- * 生成主页HTML
- * @param {Object} data - 页面数据
- * @returns {string} HTML字符串
- */
 export const generateHomePage = (data) => {
     const {
         currentTime,

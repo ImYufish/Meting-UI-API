@@ -1,7 +1,3 @@
-/**
- * API 路由模块 - Meting API 核心功能
- */
-
 import { isVercel } from '../config/database.js';
 import { incrementApiCalls } from '../services/stats.js';
 import { format as lyricFormat, get_url } from '../../src/util.js';
@@ -30,9 +26,6 @@ const METING_METHODS = {
   pic: 'pic'
 }
 
-/**
- * 酷狗音乐搜索 API
- */
 const kugouSearch = async (keyword, limit = 30) => {
   const response = await fetch(`http://mobilecdn.kugou.com/api/v3/search/song?format=json&keyword=${encodeURIComponent(keyword)}&pagesize=${limit}`);
   const data = await response.json();
@@ -61,9 +54,6 @@ const kugouSearch = async (keyword, limit = 30) => {
   });
 };
 
-/**
- * 酷狗音乐歌单 API
- */
 const kugouPlaylist = async (playlistId) => {
   const meting = new Meting('kugou');
   meting.format(true);
@@ -88,9 +78,6 @@ const kugouPlaylist = async (playlistId) => {
   return songsWithCovers;
 };
 
-/**
- * 酷狗音乐艺术家 API
- */
 const kugouArtist = async (artistId) => {
   const meting = new Meting('kugou');
   meting.format(true);
@@ -115,16 +102,11 @@ const kugouArtist = async (artistId) => {
   return songsWithCovers;
 };
 
-/**
- * 构建URL辅助函数
- */
 const buildUrl = (c, path) => {
-    // 优先使用 X-Forwarded-* 头（Nginx代理传递的真实信息）
     const protocol = c.req.header('X-Forwarded-Proto') || c.req.header('X-Scheme') || 'http';
     const forwardedHost = c.req.header('X-Forwarded-Host');
     const host = forwardedHost || c.req.header('Host') || new URL(c.req.url).host;
     
-    // 移除端口号（如果域名不需要端口）
     let cleanHost = host;
     if (forwardedHost && !forwardedHost.includes(':')) {
         cleanHost = host.split(':')[0];
@@ -144,9 +126,6 @@ const buildUrl = (c, path) => {
     }
 };
 
-/**
- * API 主处理器 - 核心音乐数据接口
- */
 export const apiHandler = async (c) => {
     const query = c.req.query();
     const server = query.server || 'tencent';
@@ -154,7 +133,6 @@ export const apiHandler = async (c) => {
     const id = query.id || '8664505249';
     const token = query.token || query.auth || 'token';
 
-    // 验证参数
     if (!['netease', 'tencent', 'kugou'].includes(server)) {
         c.status(400);
         return c.json({
@@ -174,7 +152,6 @@ export const apiHandler = async (c) => {
         });
     }
 
-    // 鉴权 - url/pic/lrc 需要鉴权
     if (['lrc', 'url', 'pic'].includes(type)) {
         if (ENABLE_AUTH && auth(server, type, id) !== token) {
             c.status(401);
@@ -183,16 +160,13 @@ export const apiHandler = async (c) => {
     }
 
     try {
-        // 记录 API 调用（非 Vercel 环境）
         if (!isVercel) {
             await incrementApiCalls();
         }
 
-        // 检查缓存
         const cacheKey = `${server}/${type}/${id}`;
         let data = cache.get(cacheKey);
         
-        // 酷狗音乐封面图特殊处理（跳过 @meting/core 库调用）
         if (type === 'pic' && server === 'kugou') {
             const hash = id;
             if (hash && hash.length >= 32) {
@@ -206,7 +180,6 @@ export const apiHandler = async (c) => {
         if (data === undefined) {
             c.header('x-cache', 'miss');
             
-            // 酷狗音乐搜索使用自定义 API
             if (type === 'search' && server === 'kugou') {
                 const limit = query.limit ? parseInt(query.limit) : 30;
                 data = await kugouSearch(id, limit);
@@ -215,7 +188,6 @@ export const apiHandler = async (c) => {
             } else if (type === 'artist' && server === 'kugou') {
                 data = await kugouArtist(id);
             } else {
-                // 检查 referrer 并配置 cookie
                 const referrer = c.req.header('referer');
                 let cookie = '';
                 if (isAllowedHost(referrer)) {
@@ -247,7 +219,6 @@ export const apiHandler = async (c) => {
                 }
             }
 
-            // 缓存结果
             cache.set(cacheKey, data, {
                 ttl: type === 'url' ? 1000 * 60 * 10 : 1000 * 60 * 60
             });
@@ -255,7 +226,6 @@ export const apiHandler = async (c) => {
             c.header('x-cache', 'hit');
         }
 
-        // URL 类型处理
         if (type === 'url') {
             let url = data.url;
 
@@ -267,7 +237,6 @@ export const apiHandler = async (c) => {
                 return c.text(url);
             }
 
-            // 链接转换
             if (server === 'netease') {
                 url = url
                     .replace('://m7c.', '://m7.')
@@ -294,7 +263,6 @@ export const apiHandler = async (c) => {
             return c.redirect(url);
         }
 
-        // 图片类型处理
         if (type === 'pic') {
             let url = data.url;
             if (!url) {
@@ -304,12 +272,10 @@ export const apiHandler = async (c) => {
             return c.redirect(url);
         }
 
-        // 歌词类型处理 - 使用原版格式化
         if (type === 'lrc') {
             return c.text(originalLyricFormat(data.lyric, data.tlyric || ''));
         }
 
-        // JSON 类型数据填充 API URL
         if (!Array.isArray(data)) {
             if (data && (data.name || data.songName)) {
                 const songName = data.name || data.songName;
@@ -371,16 +337,10 @@ const auth = (server, type, id) => {
     return hmac.digest('hex');
 };
 
-/**
- * 测试路由处理器
- */
 export const testHandler = (c) => {
     return testPageHandler(c);
 };
 
-/**
- * 健康检查处理器
- */
 export const healthHandler = (c) => {
     return c.json({
         status: 'ok',
@@ -390,19 +350,11 @@ export const healthHandler = (c) => {
     });
 };
 
-/**
- * API 文档处理器 - HTML 页面
- */
 export const docsHandler = createDocsHandler(buildUrl);
 
-/**
- * 注册 API 路由
- */
 export const registerApiRoutes = (app) => {
-    // 核心 API 路由
     app.get('/api', apiHandler);
 
-    // 辅助路由
     app.get('/test', testHandler);
     app.get('/health', healthHandler);
     app.get('/docs', docsHandler);
