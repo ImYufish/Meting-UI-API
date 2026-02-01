@@ -20,27 +20,25 @@ import { generateHomePage } from '../templates/home.js';
  * 构建URL辅助函数
  */
 const buildUrl = (c, path) => {
-    // 优先使用 X-Forwarded-* 头（Nginx代理传递的真实信息）
     const protocol = c.req.header('X-Forwarded-Proto') || c.req.header('X-Scheme') || 'http';
     const forwardedHost = c.req.header('X-Forwarded-Host');
     const host = forwardedHost || c.req.header('Host') || new URL(c.req.url).host;
     
-    // 移除端口号（如果域名不需要端口）
     let cleanHost = host;
     if (forwardedHost && !forwardedHost.includes(':')) {
         cleanHost = host.split(':')[0];
     }
     
     let base = protocol + '://' + cleanHost;
-    const currentPath = new URL(c.req.url).pathname;
     
     if (isVercel) {
         return base + path;
     } else {
-        if (currentPath.startsWith('/meting')) {
-            return base + '/meting' + path;
-        } else {
+        const isIP = /^(\d{1,3}\.){3}\d{1,3}(:\d+)?$/.test(cleanHost) || /^localhost(:\d+)?$/.test(cleanHost);
+        if (isIP) {
             return base + path;
+        } else {
+            return base + '/meting' + path;
         }
     }
 };
