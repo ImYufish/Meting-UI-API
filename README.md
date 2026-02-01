@@ -37,7 +37,6 @@
 - ✅ 歌曲 URL (`url`)
 - ✅ 歌词 (`lrc`)
 - ✅ 歌单 (`playlist`)
-- ✅ 搜索 (`search`)
 
 ### 酷狗音乐 (kugou)
 - ✅ 歌曲信息 (`song`)
@@ -190,23 +189,78 @@ curl "http://localhost:2500/api?server=kugou&type=search&id=周杰伦"
 
 # 🔧 配置
 
-## 数据库配置（项目根目录/mysql.js）（可选，不配置则使用文件存储）
+## HMAC 鉴权配置（可选）
 
-如果需要使用 MySQL 存储统计数据，请配置数据库连接信息。不配置则默认使用文件存储（`data/api_stats.json`）。
+项目支持 HMAC 签名鉴权，用于保护 `/api` 接口中的 `url`、`pic`、`lrc` 类型请求。
 
-```mysql.js文件
-DB_HOST=localhost
-DB_PORT=3306
-DB_USER=root
-DB_PASSWORD=your_password
-DB_NAME=meting_api
+### 配置文件
+
+在 `setting/hmac.js` 中配置：
+
+```javascript
+export const HMAC_SECRET = 'meting';  // 签名密钥
+export const ENABLE_AUTH = false;     // 是否启用鉴权（true=启用，false=禁用）
 ```
 
-数据库表会自动创建，包含以下字段：
-- 总请求数
-- 成功/失败次数
-- 各平台请求统计
-- 最后更新时间
+### 使用方式
+
+当 `ENABLE_AUTH` 设置为 `true` 时，请求需要携带签名参数 `token`。
+
+签名计算方式：
+```javascript
+import crypto from 'crypto';
+
+function generateToken(server, type, id, secret) {
+    const str = `${server}${type}${id}`;
+    return crypto.createHmac('sha256', secret).update(str).digest('hex');
+}
+
+const token = generateToken('netease', 'url', '1901371647', 'meting');
+```
+
+请求示例：
+```bash
+curl "http://localhost:2500/api?server=netease&type=url&id=1901371647&token=${token}"
+```
+
+## 数据库配置（可选）
+
+### Node.js 环境
+
+如果需要使用 MySQL 存储统计数据，请编辑项目根目录`/setting/mysql.js` 文件：
+
+```javascript
+export default {
+    host: 'localhost',
+    port: 3306,
+    user: 'root',
+    password: 'your_password',
+    database: 'meting_api'
+};
+```
+
+**注意**：Node.js 环境不支持 `.env` 文件配置数据库，必须使用 `mysql.js` 文件。
+
+### Vercel 环境
+
+在 Vercel 环境中，可以通过环境变量配置 MySQL 数据库：
+
+| 环境变量 | 说明 | 默认值 |
+|----------|------|--------|
+| `CHUYE_MYSQL_HOST` | 数据库主机 | - |
+| `CHUYE_MYSQL_PORT` | 数据库端口 | 3306 |
+| `CHUYE_MYSQL_USER` | 数据库用户 | meting |
+| `CHUYE_MYSQL_PASSWD` | 数据库密码 | - |
+| `CHUYE_MYSQL_DB` | 数据库名称 | meting |
+
+**重要**：
+- 只有同时配置了 `CHUYE_MYSQL_HOST` 和 `CHUYE_MYSQL_PASSWD` 时，才会启用 MySQL 统计功能
+- 未配置这两个环境变量时，将不使用统计功能
+- Vercel 环境不支持 `mysql.js` 文件配置
+
+### 文件存储（默认）
+
+如果不配置数据库，系统将使用文件存储统计数据（`data/api_stats.json`）。
 
 ## 📊 统计功能
 
@@ -235,25 +289,54 @@ DB_NAME=meting_api
 ```
 Meting-UI-API/
 ├── api/                    # Vercel API 入口
+│   └── index.js
 ├── data/                   # 数据存储目录
+│   └── api_stats.json
 ├── set/                    # 核心代码
 │   ├── config/            # 配置文件
+│   │   └── database.js
 │   ├── middleware/        # 中间件
+│   │   └── index.js
 │   ├── routes/            # 路由处理
+│   │   ├── api.js
+│   │   ├── docs.js
+│   │   ├── home.js
+│   │   ├── index.js
+│   │   └── stats.js
 │   ├── services/          # 服务层
+│   │   ├── database.js
+│   │   ├── file.js
+│   │   └── stats.js
 │   ├── templates/         # 模板
-│   └── utils/             # 工具函数
+│   │   └── home.js
+│   ├── utils/             # 工具函数
+│   │   ├── cleanup.js
+│   │   ├── cookie.js
+│   │   ├── lyric.js
+│   │   └── time.js
+│   └── ziti/             # 字体文件
+│       └── moren.woff2
+├── setting/                # 配置文件
+│   ├── hmac.js            # HMAC鉴权配置
+│   ├── mysql.js           # MySQL配置
+│   ├── netease.cookie     # 网易云Cookie
+│   ├── tencent.cookie     # QQ音乐Cookie
+│   └── kugou.cookie      # 酷狗Cookie
 ├── src/                    # 音乐平台适配器
-│   └── providers/         # 各平台实现
-│       ├── netease/       # 网易云音乐
-│       ├── tencent/       # QQ音乐
-│       ├── kugou/         # 酷狗音乐
-│       ├── spotify/       # Spotify
-│       └── ytmusic/       # YouTube Music
+│   ├── providers/         # 各平台实现
+│   │   ├── spotify/       # Spotify
+│   │   └── ytmusic/      # YouTube Music
+│   ├── config.js
+│   ├── example.js
+│   ├── template.js
+│   └── util.js
 ├── test/                   # 测试文件
+│   └── providers.test.js
 ├── app.js                  # 主应用
 ├── node.js                 # Node.js 入口
 ├── deno.js                 # Deno 入口
+├── esbuild.config.js       # 构建配置
+├── vercel.json             # Vercel 配置
 └── package.json           # 项目配置
 ```
 
@@ -283,7 +366,7 @@ Meting-UI-API/
 
 ## 🙏 致谢
 
-本项目基于 [xizeyoupan/Meting](https://github.com/xizeyoupan/Meting-API) 项目，使用 JavaScript 重写并增强。
+本项目基于 [xizeyoupan/Meting](https://github.com/xizeyoupan/Meting-API)与[@meting/core](https://www.npmjs.com/package/@meting/core) 项目，使用 JavaScript 重写并增强。
 
 ## ⚠️ 免责声明
 
