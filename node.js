@@ -1,58 +1,70 @@
 import { serve } from '@hono/node-server'
-import app from './app.js'
-import config from './src/config.js'
+import app, { initialize, PORT, getLocalIP } from './app.js'
 
-const server = serve({
-    fetch: app.fetch,
-    port: config.PORT
-}, (info) => {
-    console.log(`🚀 服务器运行在 http://localhost:${info.port}`)
-})
-
-let isShuttingDown = false
-
-const shutdown = async () => {
-    if (isShuttingDown) return
-    isShuttingDown = true
+// 启动服务器
+const startServer = async () => {
+    // 先初始化应用
+    await initialize();
     
-    console.log('\n🛑 正在关闭服务器...')
-   
-    server.close(async (err) => {
-        if (err) {
-            console.error('关闭服务器失败:', err)
-            process.exit(1)
-        }
+    const localIP = getLocalIP();
+    
+    const server = serve({
+        fetch: app.fetch,
+        port: PORT
+    }, (info) => {
+        console.log(`\n🎵 Meting API 服务已启动`);
+        console.log(`📡 本地地址: http://localhost:${info.port}`);
+        console.log(`📡 网络地址: http://${localIP}:${info.port}`);
+        console.log(`\n💡 提示: 访问 http://localhost:${info.port} 查看服务状态`);
+        console.log(`📊 统计页面: http://localhost:${info.port}/stats\n`);
+    });
+
+    // 优雅关闭处理
+    let isShuttingDown = false;
+
+    const shutdown = async () => {
+        if (isShuttingDown) return;
+        isShuttingDown = true;
         
-        console.log('✅ 服务器已关闭')
+        console.log('\n正在关闭服务器...');
         
-        if (app.cleanup) {
-            try {
-                await app.cleanup()
-            } catch (error) {
-                console.error('清理失败:', error)
+        server.close(async (err) => {
+            if (err) {
+                console.error('关闭服务器失败:', err);
+                process.exit(1);
             }
-        }
+            
+            console.log('✅ 服务器已关闭');
+            
+            if (app.cleanup) {
+                try {
+                    await app.cleanup();
+                } catch (error) {
+                    console.error('清理失败:', error);
+                }
+            }
+            
+            setTimeout(() => {
+                process.exit(0);
+            }, 100);
+        });
         
         setTimeout(() => {
-            process.exit(0)
-        }, 100)
-    })
-    
-    setTimeout(() => {
-        console.error('关闭超时，强制退出')
-        process.exit(1)
-    }, 10000)
-}
+            console.error('关闭超时，强制退出');
+            process.exit(1);
+        }, 10000);
+    };
 
-process.on('SIGINT', shutdown)
-process.on('SIGTERM', shutdown)
+    process.on('SIGINT', shutdown);
+    process.on('SIGTERM', shutdown);
+    process.on('uncaughtException', (error) => {
+        console.error('未处理的异常:', error);
+        shutdown();
+    });
+    process.on('unhandledRejection', (reason) => {
+        console.error('未处理的Promise拒绝:', reason);
+        shutdown();
+    });
+};
 
-process.on('uncaughtException', (error) => {
-    console.error('未处理的异常:', error)
-    shutdown()
-})
-
-process.on('unhandledRejection', (reason) => {
-    console.error('未处理的Promise拒绝:', reason)
-    shutdown()
-})
+startServer().catch(console.error);

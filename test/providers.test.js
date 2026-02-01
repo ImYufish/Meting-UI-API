@@ -35,7 +35,7 @@ test('test api', async () => {
         }
         for (const type in examples[provider_name]) {
 
-            const url = `http://localhost:3000/api?server=${provider_name}&type=${type}&id=${examples[provider_name][type].value}`
+            const url = `http://localhost:2500/api?server=${provider_name}&type=${type}&id=${examples[provider_name][type].value}`
             let res, count = 0
             while (count < 5) {
                 res = await app.request(url)

@@ -2,7 +2,7 @@ const DB_CONFIG = {
     host: 'localhost',
     port: 3306,
     user: 'meting',
-    password: 'meting',
+    password: 'mAjYGPa3FNd7KAHF',
     database: 'meting',
     waitForConnections: true,
     connectionLimit: 10,

@@ -1,17 +1,19 @@
 # 初叶🍂Meting API
 使用教程：https://www.chuyel.top/472
 
-运行之前先修改/src/providers/你的所属账号（网易云，QQ......）（netease为网易云，tencent为QQ音乐，请看上面的使用教程修改）
+更新日志：https://qiu.chuyel.top/%E4%BF%AE%E6%94%B9%E7%9A%84%E5%B0%8F%E7%A8%8B%E5%BA%8F/%E5%88%9D%E5%8F%B6%F0%9F%8D%82Meting%20API
+
+运行之前先修改/src/providers/你的所属账号（网易云，QQ，酷狗....）netease为网易云，tencent为QQ音乐，kugou为酷狗音乐，请看上面的使用教程修改）
 
 [![License](https://img.shields.io/badge/license-MIT-blue.svg)](LICENSE)
 [![Node.js Version](https://img.shields.io/badge/node-%3E%3D18.0.0-brightgreen.svg)](https://nodejs.org/)
-[![Version](https://img.shields.io/badge/version-1.5.0-orange.svg)](package.json)
+[![Version](https://img.shields.io/badge/version-1.6.0-orange.svg)](package.json)
 
-一个强大的音乐 API 服务，支持多个音乐平台的数据获取，包括网易云音乐、QQ音乐、Spotify 和 YouTube Music。
+一个强大的音乐 API 服务，支持多个音乐平台的数据获取，包括网易云音乐、QQ音乐、酷狗音乐、Spotify 和 YouTube Music。
 
 ## ✨ 特性
 
-- 🎵 **多平台支持**：网易云音乐、QQ音乐、Spotify、YouTube Music
+- 🎵 **多平台支持**：网易云音乐、QQ音乐、酷狗音乐、Spotify、YouTube Music
 - 🚀 **多种部署方式**：支持 Node.js、Deno 和 Vercel 部署
 - 📊 **API 统计**：内置请求统计和监控功能
 - 🔄 **自动重置**：支持每日/每周/每月自动重置统计数据
@@ -35,6 +37,13 @@
 - ✅ 歌曲 URL (`url`)
 - ✅ 歌词 (`lrc`)
 - ✅ 歌单 (`playlist`)
+
+### 酷狗音乐 (kugou)
+- ✅ 歌曲信息 (`song`)
+- ✅ 歌曲 URL (`url`)
+- ✅ 歌词 (`lrc`)
+- ✅ 歌曲封面 (`pic`)
+- ✅ 搜索 (`search`)
 
 ### Spotify
 - ✅ 歌曲信息 (`song`)
@@ -69,11 +78,8 @@ pnpm install
 #### Node.js 部署
 
 ```bash
-# 构建项目
-npm run build:all
-
 # 启动服务
-npm run start:node
+node node.js
 ```
 
 服务将在 `http://localhost:2500` 启动
@@ -106,7 +112,7 @@ GET /api?server={平台}&type={类型}&id={ID}
 
 | 参数 | 说明 | 必填 | 可选值 |
 |------|------|------|--------|
-| server | 音乐平台 | 是 | `netease`, `tencent`, `spotify`, `ytmusic` |
+| server | 音乐平台 | 是 | `netease`, `tencent`, `kugou`, `spotify`, `ytmusic` |
 | type | 请求类型 | 是 | `song`, `url`, `lrc`, `pic`, `playlist`, `artist`, `search` |
 | id | 资源ID | 是 | 歌曲ID、歌单ID、歌手ID或搜索关键词 |
 
@@ -120,6 +126,9 @@ curl "http://localhost:2500/api?server=netease&type=song&id=1901371647"
 
 # QQ音乐
 curl "http://localhost:2500/api?server=tencent&type=song&id=001OyHbk2MSIi4"
+
+# 酷狗音乐
+curl "http://localhost:2500/api?server=kugou&type=song&id=b3a52a7a958bf0aed0ebfba2e9a818b7"
 ```
 
 #### 获取歌曲播放地址
@@ -143,7 +152,11 @@ curl "http://localhost:2500/api?server=netease&type=playlist&id=7512726744"
 #### 搜索歌曲
 
 ```bash
+# 网易云音乐
 curl "http://localhost:2500/api?server=netease&type=search&id=起风了"
+
+# 酷狗音乐
+curl "http://localhost:2500/api?server=kugou&type=search&id=周杰伦"
 ```
 
 ### 响应格式
@@ -219,7 +232,7 @@ DB_NAME=meting_api
 ### 项目结构
 
 ```
-meting-backend-js/
+Meting-UI-API/
 ├── api/                    # Vercel API 入口
 ├── data/                   # 数据存储目录
 ├── set/                    # 核心代码
@@ -233,6 +246,7 @@ meting-backend-js/
 │   └── providers/         # 各平台实现
 │       ├── netease/       # 网易云音乐
 │       ├── tencent/       # QQ音乐
+│       ├── kugou/         # 酷狗音乐
 │       ├── spotify/       # Spotify
 │       └── ytmusic/       # YouTube Music
 ├── test/                   # 测试文件
@@ -244,15 +258,13 @@ meting-backend-js/
 
 ### 构建
 
-```bash
-npm run build:all
-```
+无需构建，安装好依赖启动即可
 
 ## 📝 可用端点
 
 | 端点 | 说明 |
 |------|------|
-| `/` | 首页，显示 API 文档 |
+| `/` | 首页 |
 | `/api` | 核心 API 端点 |
 | `/stats` | 统计页面 |
 | `/stats/json` | 统计数据 |
