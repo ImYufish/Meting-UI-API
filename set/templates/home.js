@@ -591,8 +591,8 @@ export const generateHomePage = (data) => {
                      alt="初叶" 
                      style="width: 80px; height: 80px; border-radius: 50%; object-fit: cover; border: 4px solid var(--border-color); box-shadow: 0 8px 25px var(--shadow-color); background: var(--card-bg); padding: 3px; animation: float 3s ease-in-out infinite;">
             </div>
-            <h1>初叶🍂竹叶 Furry Meting API 服务</h1>
-            <p class="tagline">初叶🍂超不稳定的音乐API服务，欸嘿开玩笑的~，公益QQ/网易音乐API，可解析QQ的VIP音乐哦~~~（网易暂不支持：没钱~~~~）</p>
+            <h1>初叶🍂Meting API</h1>
+            <p class="tagline">初叶🍂Meting API-1.6.0</p>
             <div class="version-badge">版本 v1.6.0</div>
             ${isVercel ? `
             <div class="vercel-notice">
