@@ -37,6 +37,7 @@
 - ✅ 歌曲 URL (`url`)
 - ✅ 歌词 (`lrc`)
 - ✅ 歌单 (`playlist`)
+- ✅ 搜索 (`search`)
 
 ### 酷狗音乐 (kugou)
 - ✅ 歌曲信息 (`song`)
