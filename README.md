@@ -1,5 +1,6 @@
 # 初叶🍂Meting API
 使用教程：https://www.chuyel.top/472
+此教程已部分过时，Cookie需填入/setting文件夹下的各个相符的音源即可
 
 更新日志：https://qiu.chuyel.top/%E4%BF%AE%E6%94%B9%E7%9A%84%E5%B0%8F%E7%A8%8B%E5%BA%8F/%E5%88%9D%E5%8F%B6%F0%9F%8D%82Meting%20API
 
