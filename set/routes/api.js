@@ -47,6 +47,7 @@ const kugouSearch = async (keyword, limit = 30) => {
       url_id: item.hash,
       pic_id: item.hash,
       lyric_id: item.hash,
+      album_id: item.album_id,
       source: 'kugou',
       _raw: item,
       pic: coverUrl
@@ -166,16 +167,6 @@ export const apiHandler = async (c) => {
 
         const cacheKey = `${server}/${type}/${id}`;
         let data = cache.get(cacheKey);
-        
-        if (type === 'pic' && server === 'kugou') {
-            const hash = id;
-            if (hash && hash.length >= 32) {
-                const url = `http://imge.kugou.com/stdmusic/400/${hash}.jpg`;
-                return c.redirect(url);
-            }
-            c.status(404);
-            return c.body(null, 404);
-        }
         
         if (data === undefined) {
             c.header('x-cache', 'miss');
