@@ -3,7 +3,7 @@
 
 此教程Cookie填写仅适合<=1.5.8版本，>=1.6.0版本音乐Cookie需填入/setting文件夹下的各个相符的音源即可
 
-更新日志：https://qiu.chuyel.top/%E4%BF%AE%E6%94%B9%E7%9A%84%E5%B0%8F%E7%A8%8B%E5%BA%8F/%E5%88%9D%E5%8F%B6%F0%9F%8D%82Meting%20API
+更新日志：https://www.chuyel.cn/%E4%BA%8C%E6%94%B9%E7%A8%8B%E5%BA%8F/%E5%88%9D%E5%8F%B6%F0%9F%8D%82Meting%20API/
 
 运行之前先修改/src/providers/你的所属账号（网易云，QQ，酷狗....）netease为网易云，tencent为QQ音乐，kugou为酷狗音乐，请看上面的使用教程修改）
 
