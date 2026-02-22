@@ -16,18 +16,24 @@ const buildUrl = (c, path) => {
     const protocol = c.req.header('X-Forwarded-Proto') || c.req.header('X-Scheme') || 'http';
     const forwardedHost = c.req.header('X-Forwarded-Host');
     const host = forwardedHost || c.req.header('Host') || new URL(c.req.url).host;
-    
+
     let cleanHost = host;
+
+    cleanHost = cleanHost.replace(/^https?:\/\//, '');
+    cleanHost = cleanHost.split('/')[0];
+
     if (forwardedHost && !forwardedHost.includes(':')) {
-        cleanHost = host.split(':')[0];
+        cleanHost = cleanHost.split(':')[0];
     }
-    
+
+    const currentPath = new URL(c.req.url).pathname;
+    const isIP = /^(\d{1,3}\.){3}\d{1,3}(:\d+)?$/.test(cleanHost) || /^localhost(:\d+)?$/.test(cleanHost);
+
     let base = protocol + '://' + cleanHost;
-    
+
     if (isVercel) {
         return base + path;
     } else {
-        const isIP = /^(\d{1,3}\.){3}\d{1,3}(:\d+)?$/.test(cleanHost) || /^localhost(:\d+)?$/.test(cleanHost);
         if (isIP) {
             return base + path;
         } else {
@@ -40,14 +46,30 @@ const getRealRequestUrl = (c) => {
     const protocol = c.req.header('X-Forwarded-Proto') || c.req.header('X-Scheme') || 'http';
     const forwardedHost = c.req.header('X-Forwarded-Host');
     const host = forwardedHost || c.req.header('Host') || new URL(c.req.url).host;
-    
+
     let cleanHost = host;
+
+    cleanHost = cleanHost.replace(/^https?:\/\//, '');
+    cleanHost = cleanHost.split('/')[0];
+
     if (forwardedHost && !forwardedHost.includes(':')) {
-        cleanHost = host.split(':')[0];
+        cleanHost = cleanHost.split(':')[0];
     }
-    
-    const pathname = new URL(c.req.url).pathname;
-    return protocol + '://' + cleanHost + pathname;
+
+    const currentPath = new URL(c.req.url).pathname;
+    const isIP = /^(\d{1,3}\.){3}\d{1,3}(:\d+)?$/.test(cleanHost) || /^localhost(:\d+)?$/.test(cleanHost);
+
+    let basePath = protocol + '://' + cleanHost;
+
+    if (isVercel) {
+        return basePath + currentPath;
+    } else {
+        if (isIP) {
+            return basePath + currentPath;
+        } else {
+            return basePath + currentPath;
+        }
+    }
 };
 
 export const homeHandler = (c) => {

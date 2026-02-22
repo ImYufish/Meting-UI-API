@@ -23,7 +23,7 @@ export const generateHomePage = (data) => {
     } = data;
 
     const baseUrl = requestUrl.replace(/\/+$/, '');
-    const docsUrl = isVercel ? `${baseUrl}/docs` : `${baseUrl}/meting/docs`;
+    const docsUrl = `${baseUrl}/docs`;
 
     return `<!DOCTYPE html>
 <html lang="zh-CN">
@@ -592,8 +592,8 @@ export const generateHomePage = (data) => {
                      style="width: 80px; height: 80px; border-radius: 50%; object-fit: cover; border: 4px solid var(--border-color); box-shadow: 0 8px 25px var(--shadow-color); background: var(--card-bg); padding: 3px; animation: float 3s ease-in-out infinite;">
             </div>
             <h1>初叶🍂Meting API</h1>
-            <p class="tagline">初叶🍂Meting API-1.6.1</p>
-            <div class="version-badge">版本 v1.6.1</div>
+            <p class="tagline">初叶🍂Meting API-1.6.4</p>
+            <div class="version-badge">版本 v1.6.4</div>
             ${isVercel ? `
             <div class="vercel-notice">
                 <strong>Vercel环境说明：</strong> 当前运行在Vercel环境中，未配置数据库统计数据无法保存。如需API调用统计，请配置环境变量或部署到本地或自有服务器。
