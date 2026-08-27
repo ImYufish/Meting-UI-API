@@ -156,9 +156,11 @@ const resolveAudioUrl = async (server, id, cookie) => {
     return result;
 };
 
-// 边缘缓存：让 Vercel 边缘节点就近返回
+// 边缘缓存：让 Vercel 边缘节点就近返回（仅对稳定响应生效）
 const setEdgeCache = (c, type) => {
-    const ttl = (type === 'url' || type === 'pic') ? 600 : 3600;
+    // url 直链带时效，不边缘缓存——避免过期直链被复用，更避免限流/失败时空响应被缓存放大成「永久放不了」
+    if (type === 'url') return;
+    const ttl = (type === 'pic') ? 600 : 3600;
     c.header('Cache-Control', `public, s-maxage=${ttl}, max-age=60`);
 };
 
@@ -282,7 +284,6 @@ export const apiHandler = async (c) => {
             c.header('x-cache', 'hit');
         }
 
-        setEdgeCache(c, type);
         const fillSong = query.fill === '1' && type === 'song';
 
         if (type === 'url') {
@@ -290,7 +291,7 @@ export const apiHandler = async (c) => {
 
             if (!url) {
                 c.status(404);
-                return c.body(null, 404);
+                return c.json({ error: 'no url', server, message: '直链为空：该平台可能需要配置对应 cookie（如 METING_COOKIE_KUGOU / METING_COOKIE_NETEASE）' });
             }
             if (url.startsWith('@')) {
                 return c.text(url);
@@ -305,6 +306,7 @@ export const apiHandler = async (c) => {
                 c.status(404);
                 return c.body(null, 404);
             }
+            setEdgeCache(c, type);
             return c.redirect(url);
         }
 
@@ -316,6 +318,7 @@ export const apiHandler = async (c) => {
                 c.status(404);
                 return c.text('');
             }
+            setEdgeCache(c, type);
             return c.text(originalLyricFormat(rawLyric, rawTlyric));
         }
 
@@ -340,6 +343,7 @@ export const apiHandler = async (c) => {
                     ? (fillSong ? await resolveAudioUrl(server, urlId, cookie) : `${get_url(c)}?server=${server}&type=url&id=${urlId}`)
                     : '';
 
+                setEdgeCache(c, type);
                 return c.json([{
                     title: songName,
                     author: artistName,
@@ -351,6 +355,7 @@ export const apiHandler = async (c) => {
             c.status(404);
             return c.json({ error: 'no data' });
         }
+        setEdgeCache(c, type);
         return c.json(await Promise.all(data.map(async (x) => {
             let picUrl = '';
             if (server === 'kugou' && x.pic) {
