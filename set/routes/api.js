@@ -1,12 +1,18 @@
+import crypto from 'crypto';
 import { isVercel } from '../config/database.js';
 import { incrementApiCalls } from '../services/stats.js';
-import { format as lyricFormat, get_url } from '../../src/util.js';
-import { format as originalLyricFormat } from '../utils/lyric.js';
+import { format as originalLyricFormat, get_url } from '../../src/util.js';
 import { readCookieFile, isAllowedHost } from '../utils/cookie.js';
 import { createDocsHandler } from './docs.js';
 import { handler as testPageHandler } from '../../src/template.js';
 import { LRUCache } from 'lru-cache';
 import Meting from '@meting/core';
+import { HMAC_SECRET, ENABLE_AUTH } from '../../setting/hmac.js';
+
+// 可选:QQ 歌词代理。用于 Vercel 等海外节点绕过 QQ 音乐对 fcg_query_lyric_new.fcg 的境外 IP 限制。
+// 例如指向部署在国内的中转服务:https://你的代理域名
+// 留空则走默认直连(国内/无限制环境下正常工作)。
+const LYRIC_PROXY = process.env.LYRIC_PROXY || '';
 
 const cache = new LRUCache({
     max: 1000,
@@ -107,22 +113,14 @@ const buildUrl = (c, path) => {
     const host = forwardedHost || c.req.header('Host') || new URL(c.req.url).host;
 
     let cleanHost = host;
+    cleanHost = cleanHost.replace(/^https?:\/\//, '');
+    cleanHost = cleanHost.split('/')[0];
+
     if (forwardedHost && !forwardedHost.includes(':')) {
-        cleanHost = host.split(':')[0];
+        cleanHost = cleanHost.split(':')[0];
     }
 
-    let base = protocol + '://' + cleanHost;
-    const currentPath = new URL(c.req.url).pathname;
-
-    if (isVercel) {
-        return base + path;
-    } else {
-        if (currentPath.startsWith('/meting')) {
-            return base + '/meting' + path;
-        } else {
-            return base + path;
-        }
-    }
+    return protocol + '://' + cleanHost + path;
 };
 
 export const apiHandler = async (c) => {
@@ -148,6 +146,20 @@ export const apiHandler = async (c) => {
             message: 'type 参数不合法',
             param: { server, type, id }
         });
+    }
+
+    if (ENABLE_AUTH && ['url', 'pic', 'lrc'].includes(type)) {
+        const token = query.token;
+        const expected = crypto.createHmac('sha256', HMAC_SECRET).update(`${server}${type}${id}`).digest('hex');
+        if (!token || token !== expected) {
+            c.status(401);
+            return c.json({
+                error: true,
+                message: '签名校验失败',
+                hint: 'url/pic/lrc 类型请求在开启鉴权时需携带正确 token 参数',
+                param: { server, type, id }
+            });
+        }
     }
 
     try {
@@ -180,6 +192,14 @@ export const apiHandler = async (c) => {
 
                 if (cookie) {
                     meting.cookie(cookie);
+                }
+
+                // 仅对 tencent 歌词走代理:QQ 的歌词接口对境外 IP 常被限,经国内中转即可(其余接口/search/url/pic 不受影响)
+                if (type === 'lrc' && server === 'tencent' && LYRIC_PROXY) {
+                    const proxyBase = LYRIC_PROXY.replace(/\/$/, '');
+                    const origCurl = meting._curl.bind(meting);
+                    meting._curl = (url, body) =>
+                        origCurl(String(url).replace(/^https:\/\/c\.y\.qq\.com/, proxyBase), body);
                 }
 
                 const method = METING_METHODS[type];
@@ -254,7 +274,14 @@ export const apiHandler = async (c) => {
         }
 
         if (type === 'lrc') {
-            return c.text(originalLyricFormat(data.lyric, data.tlyric || ''));
+            const lyricObj = Array.isArray(data) ? data[0] : data;
+            const rawLyric = lyricObj && typeof lyricObj.lyric === 'string' ? lyricObj.lyric : '';
+            const rawTlyric = lyricObj && typeof lyricObj.tlyric === 'string' ? lyricObj.tlyric : '';
+            if (!rawLyric.trim()) {
+                c.status(404);
+                return c.text('');
+            }
+            return c.text(originalLyricFormat(rawLyric, rawTlyric));
         }
 
         if (!Array.isArray(data)) {
@@ -326,15 +353,5 @@ export const healthHandler = (c) => {
 };
 
 export const docsHandler = createDocsHandler(buildUrl);
-
-export const registerApiRoutes = (app) => {
-    app.get('/api', apiHandler);
-
-    app.get('/test', testHandler);
-    app.get('/health', healthHandler);
-    app.get('/docs', docsHandler);
-
-    console.log('✅ API 路由注册完成');
-};
 
 export default apiHandler;

@@ -1,53 +1,11 @@
-import fs from 'fs';
+import fs from 'fs/promises';
 import path from 'path';
-import { fileURLToPath } from 'url';
 import { isVercel } from '../config/database.js';
+import { STATS_FILE } from '../config/database.js';
 import { initMySQL, isUsingMySQL, dbOperations } from './database.js';
-
-const __filename = fileURLToPath(import.meta.url);
-const __dirname = path.dirname(__filename);
-
-const STATS_FILE = path.join(__dirname, '../../data/api_stats.json');
+import { getBeijingDateString, getBeijingWeekString, getBeijingMonthString } from '../utils/time.js';
 
 const dataDir = path.dirname(STATS_FILE);
-if (!fs.existsSync(dataDir)) {
-    try {
-        fs.mkdirSync(dataDir, { recursive: true });
-    } catch (e) {
-        console.log('⚠️ 无法创建data目录:', e.message);
-    }
-}
-
-function getBeijingDateString() {
-    return new Date().toLocaleDateString('zh-CN', { 
-        timeZone: 'Asia/Shanghai',
-        year: 'numeric',
-        month: '2-digit',
-        day: '2-digit'
-    }).replace(/\//g, '-');
-}
-
-function getBeijingWeekString() {
-    const now = new Date(new Date().toLocaleString('en-US', { timeZone: 'Asia/Shanghai' }));
-    
-    const dayOfWeek = now.getDay();
-    
-    const daysFromMonday = dayOfWeek === 0 ? 6 : dayOfWeek - 1;
-    
-    const monday = new Date(now);
-    monday.setDate(now.getDate() - daysFromMonday);
-    
-    const year = monday.getFullYear();
-    const month = String(monday.getMonth() + 1).padStart(2, '0');
-    const day = String(monday.getDate()).padStart(2, '0');
-    
-    return `${year}-${month}-${day}`;
-}
-
-function getBeijingMonthString() {
-    const now = new Date(new Date().toLocaleString('en-US', { timeZone: 'Asia/Shanghai' }));
-    return `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}`;
-}
 
 export let apiStats = {
     totalCalls: 0,
@@ -64,30 +22,28 @@ export let apiStats = {
     hourlyCalls: {}
 };
 
-function loadStatsFromFile() {
+async function loadStatsFromFile() {
     try {
-        if (fs.existsSync(STATS_FILE)) {
-            const data = fs.readFileSync(STATS_FILE, 'utf8');
-            const loaded = JSON.parse(data);
-            
-            apiStats = {
-                totalCalls: loaded.totalCalls || 0,
-                todayCalls: loaded.todayCalls || 0,
-                weekCalls: loaded.weekCalls || 0,
-                monthCalls: loaded.monthCalls || 0,
-                lastResetDate: loaded.lastResetDate || getBeijingDateString(),
-                lastWeeklyReset: loaded.lastWeeklyReset || getBeijingWeekString(),
-                lastMonthlyReset: loaded.lastMonthlyReset || getBeijingMonthString(),
-                lastUpdated: loaded.lastUpdated || new Date().toISOString(),
-                dailyCalls: loaded.dailyCalls || {},
-                weeklyCalls: loaded.weeklyCalls || {},
-                monthlyCalls: loaded.monthlyCalls || {},
-                hourlyCalls: loaded.hourlyCalls || {}
-            };
-            
-            console.log('📊 统计数据已从本地文件加载');
-            return true;
-        }
+        const data = await fs.readFile(STATS_FILE, 'utf8');
+        const loaded = JSON.parse(data);
+        
+        apiStats = {
+            totalCalls: loaded.totalCalls || 0,
+            todayCalls: loaded.todayCalls || 0,
+            weekCalls: loaded.weekCalls || 0,
+            monthCalls: loaded.monthCalls || 0,
+            lastResetDate: loaded.lastResetDate || getBeijingDateString(),
+            lastWeeklyReset: loaded.lastWeeklyReset || getBeijingWeekString(),
+            lastMonthlyReset: loaded.lastMonthlyReset || getBeijingMonthString(),
+            lastUpdated: loaded.lastUpdated || new Date().toISOString(),
+            dailyCalls: loaded.dailyCalls || {},
+            weeklyCalls: loaded.weeklyCalls || {},
+            monthlyCalls: loaded.monthlyCalls || {},
+            hourlyCalls: loaded.hourlyCalls || {}
+        };
+        
+        console.log('📊 统计数据已从本地文件加载');
+        return true;
     } catch (error) {
         console.error('❌ 从本地文件加载统计数据失败:', error.message);
     }
@@ -143,7 +99,7 @@ export async function loadStats() {
         }
     }
     
-    if (!loadStatsFromFile()) {
+    if (!(await loadStatsFromFile())) {
         await saveStats();
         console.log('📊 创建新的统计数据');
     } else {
@@ -151,8 +107,9 @@ export async function loadStats() {
     }
 }
 
-function saveStatsToFile() {
+async function saveStatsToFile() {
     try {
+        await fs.mkdir(dataDir, { recursive: true });
         const saveData = {
             totalCalls: apiStats.totalCalls || 0,
             todayCalls: apiStats.todayCalls || 0,
@@ -167,7 +124,7 @@ function saveStatsToFile() {
             monthlyCalls: apiStats.monthlyCalls || {},
             hourlyCalls: apiStats.hourlyCalls || {}
         };
-        fs.writeFileSync(STATS_FILE, JSON.stringify(saveData, null, 2));
+        await fs.writeFile(STATS_FILE, JSON.stringify(saveData, null, 2));
         return true;
     } catch (error) {
         console.error('❌ 保存统计数据到本地文件失败:', error.message);
@@ -219,7 +176,7 @@ export async function saveStats() {
         await saveStatsToMySQL();
     }
     
-    saveStatsToFile();
+    await saveStatsToFile();
 }
 
 function isOldWeekFormat(weekStr) {

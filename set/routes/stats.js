@@ -25,10 +25,4 @@ export const statsHandler = async (c) => {
     }
 };
 
-export const registerStatsRoutes = (app) => {
-    app.get('/stats', statsHandler);
-    app.get('/stats/json', statsHandler);
-    console.log('✅ 统计路由注册完成');
-};
-
 export default statsHandler;

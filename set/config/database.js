@@ -1,6 +1,6 @@
 export const isVercel = !!(process.env.VERCEL || process.env.VERCEL_ENV || process.env.NEXT_PUBLIC_VERCEL_ENV);
 
-export const STATS_FILE = './stats.json';
+export const STATS_FILE = './data/api_stats.json';
 
 export const metingConfig = {
     url: process.env.METING_URL || '',

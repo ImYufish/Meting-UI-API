@@ -26,20 +26,7 @@ const buildUrl = (c, path) => {
         cleanHost = cleanHost.split(':')[0];
     }
 
-    const currentPath = new URL(c.req.url).pathname;
-    const isIP = /^(\d{1,3}\.){3}\d{1,3}(:\d+)?$/.test(cleanHost) || /^localhost(:\d+)?$/.test(cleanHost);
-
-    let base = protocol + '://' + cleanHost;
-
-    if (isVercel) {
-        return base + path;
-    } else {
-        if (isIP) {
-            return base + path;
-        } else {
-            return base + '/meting' + path;
-        }
-    }
+    return protocol + '://' + cleanHost + path;
 };
 
 const getRealRequestUrl = (c) => {
@@ -57,19 +44,7 @@ const getRealRequestUrl = (c) => {
     }
 
     const currentPath = new URL(c.req.url).pathname;
-    const isIP = /^(\d{1,3}\.){3}\d{1,3}(:\d+)?$/.test(cleanHost) || /^localhost(:\d+)?$/.test(cleanHost);
-
-    let basePath = protocol + '://' + cleanHost;
-
-    if (isVercel) {
-        return basePath + currentPath;
-    } else {
-        if (isIP) {
-            return basePath + currentPath;
-        } else {
-            return basePath + currentPath;
-        }
-    }
+    return protocol + '://' + cleanHost + currentPath;
 };
 
 export const homeHandler = (c) => {
@@ -136,13 +111,6 @@ export const homeHandler = (c) => {
     });
     
     return c.html(html);
-};
-
-export const registerHomeRoutes = (app) => {
-    app.get('/', homeHandler);
-    app.get('/meting', homeHandler);
-    
-    console.log('🏠 主页路由注册完成');
 };
 
 export default homeHandler;

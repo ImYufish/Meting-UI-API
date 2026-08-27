@@ -6,9 +6,7 @@ export const createDocsHandler = (buildUrl) => {
         const platforms = [
             { name: 'tencent', displayName: 'QQ音乐', types: 'song, playlist, artist, album, lrc, url, pic, search' },
             { name: 'netease', displayName: '网易云', types: 'song, playlist, artist, album, lrc, url, pic, search' },
-            { name: 'kugou', displayName: '酷狗音乐', types: 'song, playlist, artist, album, lrc, url, pic, search' },
-            { name: 'spotify', displayName: 'Spotify', types: 'song, url' },
-            { name: 'ytmusic', displayName: 'YouTube Music', types: 'song, url' }
+            { name: 'kugou', displayName: '酷狗音乐', types: 'song, playlist, artist, album, lrc, url, pic, search' }
         ];
 
         const serverRows = platforms.map(platform => {

@@ -21,6 +21,30 @@ const app = new Hono();
 app.use('*', cors());
 app.use('*', logger());
 
+// 简易按 IP 内存限流（仅作用于 /api，宽松阈值，避免误伤正常播放器轮询）
+const rateLimitStore = new Map();
+const RATE_LIMIT_WINDOW_MS = 60 * 1000;
+const RATE_LIMIT_MAX = 120;
+app.use('/api', async (c, next) => {
+    const forwarded = c.req.header('X-Forwarded-For');
+    const ip = (forwarded ? forwarded.split(',')[0].trim() : null)
+        || c.req.header('X-Real-IP')
+        || 'unknown';
+    const now = Date.now();
+    const record = rateLimitStore.get(ip) || { count: 0, resetAt: now + RATE_LIMIT_WINDOW_MS };
+    if (now > record.resetAt) {
+        record.count = 0;
+        record.resetAt = now + RATE_LIMIT_WINDOW_MS;
+    }
+    record.count += 1;
+    rateLimitStore.set(ip, record);
+    if (record.count > RATE_LIMIT_MAX) {
+        c.status(429);
+        return c.json({ error: true, message: '请求过于频繁，请稍后再试' });
+    }
+    await next();
+});
+
 app.get('/set/ziti/:filename', async (c) => {
     const filename = c.req.param('filename');
     const filePath = join(process.cwd(), 'set', 'ziti', filename);

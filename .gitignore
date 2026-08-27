@@ -1,0 +1,10 @@
+node_modules/
+dist/
+data/
+stats.json
+setting/*.cookie
+# local build/test artifacts
+tmp/
+# EdgeOne Makers 部署产物（含本地缓存与敏感 .env）
+makers-proxy/.edgeone/
+makers-proxy/.env

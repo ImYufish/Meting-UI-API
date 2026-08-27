@@ -26,6 +26,26 @@ export const getWeekKey = () => {
     return `${year}-W${week.toString().padStart(2, '0')}`;
 };
 
+// 以"本周一日期"作为周维度 key（与历史 stats 文件格式保持一致）
+export const getBeijingWeekString = () => {
+    const now = getBeijingDate();
+    const dayOfWeek = now.getDay();
+    const daysFromMonday = dayOfWeek === 0 ? 6 : dayOfWeek - 1;
+    const monday = new Date(now);
+    monday.setDate(now.getDate() - daysFromMonday);
+    const year = monday.getFullYear();
+    const month = String(monday.getMonth() + 1).padStart(2, '0');
+    const day = String(monday.getDate()).padStart(2, '0');
+    return `${year}-${month}-${day}`;
+};
+
+export const getBeijingMonthString = () => {
+    const beijingDate = getBeijingDate();
+    const year = beijingDate.getFullYear();
+    const month = beijingDate.getMonth() + 1;
+    return `${year}-${month.toString().padStart(2, '0')}`;
+};
+
 export const getMonthKey = () => {
     const beijingDate = getBeijingDate();
     const year = beijingDate.getFullYear();

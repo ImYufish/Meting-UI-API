@@ -5,17 +5,17 @@
 
 更新日志：https://www.chuyel.cn/%E4%BA%8C%E6%94%B9%E7%A8%8B%E5%BA%8F/%E5%88%9D%E5%8F%B6%F0%9F%8D%82Meting%20API/
 
-运行之前先修改/src/providers/你的所属账号（网易云，QQ，酷狗....）netease为网易云，tencent为QQ音乐，kugou为酷狗音乐，请看上面的使用教程修改）
+运行之前先修改 `setting/` 文件夹下对应的音源 Cookie 文件（`netease.cookie` / `tencent.cookie` / `kugou.cookie`），分别对应网易云、QQ音乐、酷狗音乐，请看上面的使用教程填写
 
 [![License](https://img.shields.io/badge/license-MIT-blue.svg)](LICENSE)
 [![Node.js Version](https://img.shields.io/badge/node-%3E%3D18.0.0-brightgreen.svg)](https://nodejs.org/)
-[![Version](https://img.shields.io/badge/version-1.6.0-orange.svg)](package.json)
+[![Version](https://img.shields.io/badge/version-1.6.2-orange.svg)](package.json)
 
-一个强大的音乐 API 服务，支持多个音乐平台的数据获取，包括网易云音乐、QQ音乐、酷狗音乐、Spotify 和 YouTube Music。
+一个强大的音乐 API 服务，支持多个音乐平台的数据获取，包括网易云音乐、QQ音乐和酷狗音乐。
 
 ## ✨ 特性
 
-- 🎵 **多平台支持**：网易云音乐、QQ音乐、酷狗音乐、Spotify、YouTube Music
+- 🎵 **多平台支持**：网易云音乐、QQ音乐、酷狗音乐
 - 🚀 **多种部署方式**：支持 Node.js、Deno 和 Vercel 部署
 - 📊 **API 统计**：内置请求统计和监控功能
 - 🔄 **自动重置**：支持每日/每周/每月自动重置统计数据
@@ -47,14 +47,6 @@
 - ✅ 歌词 (`lrc`)
 - ✅ 歌曲封面 (`pic`)
 - ✅ 搜索 (`search`)
-
-### Spotify
-- ✅ 歌曲信息 (`song`)
-- ✅ 歌曲 URL (`url`)
-
-### YouTube Music (ytmusic)
-- ✅ 歌曲信息 (`song`)
-- ✅ 歌曲 URL (`url`)
 
 ## 🚀 快速开始
 
@@ -115,7 +107,7 @@ GET /api?server={平台}&type={类型}&id={ID}
 
 | 参数 | 说明 | 必填 | 可选值 |
 |------|------|------|--------|
-| server | 音乐平台 | 是 | `netease`, `tencent`, `kugou`, `spotify`, `ytmusic` |
+| server | 音乐平台 | 是 | `netease`, `tencent`, `kugou` |
 | type | 请求类型 | 是 | `song`, `url`, `lrc`, `pic`, `playlist`, `artist`, `search` |
 | id | 资源ID | 是 | 歌曲ID、歌单ID、歌手ID或搜索关键词 |
 
@@ -298,13 +290,10 @@ Meting-UI-API/
 ├── set/                    # 核心代码
 │   ├── config/            # 配置文件
 │   │   └── database.js
-│   ├── middleware/        # 中间件
-│   │   └── index.js
 │   ├── routes/            # 路由处理
 │   │   ├── api.js
 │   │   ├── docs.js
 │   │   ├── home.js
-│   │   ├── index.js
 │   │   └── stats.js
 │   ├── services/          # 服务层
 │   │   ├── database.js
@@ -315,7 +304,6 @@ Meting-UI-API/
 │   ├── utils/             # 工具函数
 │   │   ├── cleanup.js
 │   │   ├── cookie.js
-│   │   ├── lyric.js
 │   │   └── time.js
 │   └── ziti/             # 字体文件
 │       └── moren.woff2
@@ -325,10 +313,7 @@ Meting-UI-API/
 │   ├── netease.cookie     # 网易云Cookie
 │   ├── tencent.cookie     # QQ音乐Cookie
 │   └── kugou.cookie      # 酷狗Cookie
-├── src/                    # 音乐平台适配器
-│   ├── providers/         # 各平台实现
-│   │   ├── spotify/       # Spotify
-│   │   └── ytmusic/      # YouTube Music
+├── src/                    # 公共工具与模板
 │   ├── config.js
 │   ├── example.js
 │   ├── template.js

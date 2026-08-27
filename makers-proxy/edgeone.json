@@ -1,0 +1,8 @@
+{
+  "mainlandRegions": ["ap-guangzhou"],
+  "overseasRegions": ["ap-guangzhou"],
+  "cloudFunctions": {
+    "includeFiles": [],
+    "maxDuration": 30
+  }
+}

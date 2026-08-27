@@ -1,4 +1,5 @@
 import { DB_CONFIG, mysql } from '../config/database.js';
+import { getBeijingDateString, getBeijingWeekString, getBeijingMonthString } from '../utils/time.js';
 
 let dbPool = null;
 let useMySQL = false;
@@ -109,29 +110,6 @@ const safeStringify = (obj) => {
     });
 };
 
-const getDateString = () => {
-    return new Date().toLocaleDateString('zh-CN', { 
-        timeZone: 'Asia/Shanghai',
-        year: 'numeric',
-        month: '2-digit',
-        day: '2-digit'
-    }).replace(/\//g, '-');
-};
-
-const getWeekString = () => {
-    const now = new Date(new Date().toLocaleString('en-US', { timeZone: 'Asia/Shanghai' }));
-    const year = now.getFullYear();
-    const firstDayOfYear = new Date(year, 0, 1);
-    const pastDaysOfYear = (now - firstDayOfYear) / 86400000;
-    const weekNumber = Math.ceil((pastDaysOfYear + firstDayOfYear.getDay() + 1) / 7);
-    return `${year}-W${String(weekNumber).padStart(2, '0')}`;
-};
-
-const getMonthString = () => {
-    const now = new Date(new Date().toLocaleString('en-US', { timeZone: 'Asia/Shanghai' }));
-    return `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}`;
-};
-
 export const dbOperations = {
     loadStats: async () => {
         if (!dbPool) return null;
@@ -176,9 +154,9 @@ export const dbOperations = {
                 weeklyCalls: weekly || {},
                 monthlyCalls: monthly || {},
                 lastUpdated: meta?.lastUpdated || new Date().toISOString(),
-                lastResetDate: meta?.lastResetDate || getDateString(),
-                lastWeeklyReset: meta?.lastWeeklyReset || getWeekString(),
-                lastMonthlyReset: meta?.lastMonthlyReset || getMonthString()
+                lastResetDate: meta?.lastResetDate || getBeijingDateString(),
+                lastWeeklyReset: meta?.lastWeeklyReset || getBeijingWeekString(),
+                lastMonthlyReset: meta?.lastMonthlyReset || getBeijingMonthString()
             };
         } catch (error) {
             console.error('❌ 从数据库加载统计数据失败:', error);
@@ -194,9 +172,9 @@ export const dbOperations = {
             
             const metadata = {
                 lastUpdated: now,
-                lastResetDate: safeValue(apiStats.lastResetDate, getDateString()),
-                lastWeeklyReset: safeValue(apiStats.lastWeeklyReset, getWeekString()),
-                lastMonthlyReset: safeValue(apiStats.lastMonthlyReset, getMonthString())
+                lastResetDate: safeValue(apiStats.lastResetDate, getBeijingDateString()),
+                lastWeeklyReset: safeValue(apiStats.lastWeeklyReset, getBeijingWeekString()),
+                lastMonthlyReset: safeValue(apiStats.lastMonthlyReset, getBeijingMonthString())
             };
 
             const queries = [
