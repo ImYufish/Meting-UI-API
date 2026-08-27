@@ -107,6 +107,61 @@ const kugouArtist = async (artistId) => {
     return songsWithCovers;
 };
 
+// 把各平台返回的音频直链做规范化（https 化、域名修正、去过期参数等）
+const postProcessUrl = (server, rawUrl) => {
+    if (!rawUrl) return '';
+    let url = rawUrl;
+    if (url.startsWith('@')) return url;
+    if (server === 'netease') {
+        url = url
+            .replace('://m7c.', '://m7.')
+            .replace('://m8c.', '://m8.')
+            .replace('http://', 'https://');
+        if (url.includes('vuutv=')) {
+            const tempUrl = new URL(url);
+            tempUrl.search = '';
+            url = tempUrl.toString();
+        }
+    } else if (server === 'tencent') {
+        url = url
+            .replace('http://', 'https://')
+            .replace('://ws.stream.qqmusic.qq.com', '://dl.stream.qqmusic.qq.com');
+    } else if (server === 'kugou') {
+        url = url
+            .replace('http://', 'https://')
+            .replace('://trackercdn.kugou.com', '://tracker.kugou.com')
+            .replace('://media.store.kugou.com', '://media.kugou.com');
+    }
+    return url;
+};
+
+// 解析歌曲直链（带缓存，供 &fill=1 内联使用；空结果也缓存避免重复打接口）
+const resolveAudioUrl = async (server, id, cookie) => {
+    const key = `url/${server}/${id}`;
+    const cached = cache.get(key);
+    if (cached !== undefined) return cached;
+    const meting = new Meting(server);
+    meting.format(true);
+    if (cookie) meting.cookie(cookie);
+    let parsed;
+    try {
+        parsed = JSON.parse(await meting.url(id));
+    } catch (e) {
+        cache.set(key, '', { ttl: 1000 * 60 * 10 });
+        return '';
+    }
+    const item = Array.isArray(parsed) ? parsed[0] : parsed;
+    const result = item && item.url ? postProcessUrl(server, item.url) : '';
+    cache.set(key, result, { ttl: 1000 * 60 * 10 });
+    return result;
+};
+
+// 边缘缓存：让 Vercel 边缘节点就近返回
+const setEdgeCache = (c, type) => {
+    const ttl = (type === 'url' || type === 'pic') ? 600 : 3600;
+    c.header('Cache-Control', `public, s-maxage=${ttl}, max-age=60`);
+};
+
 const buildUrl = (c, path) => {
     const protocol = c.req.header('X-Forwarded-Proto') || c.req.header('X-Scheme') || 'http';
     const forwardedHost = c.req.header('X-Forwarded-Host');
@@ -167,6 +222,12 @@ export const apiHandler = async (c) => {
             await incrementApiCalls();
         }
 
+        const referrer = c.req.header('referer');
+        let cookie = '';
+        if (isAllowedHost(referrer)) {
+            cookie = await readCookieFile(server);
+        }
+
         const cacheKey = `${server}/${type}/${id}`;
         let data = cache.get(cacheKey);
 
@@ -181,12 +242,6 @@ export const apiHandler = async (c) => {
             } else if (type === 'artist' && server === 'kugou') {
                 data = await kugouArtist(id);
             } else {
-                const referrer = c.req.header('referer');
-                let cookie = '';
-                if (isAllowedHost(referrer)) {
-                    cookie = await readCookieFile(server);
-                }
-
                 const meting = new Meting(server);
                 meting.format(true);
 
@@ -227,8 +282,11 @@ export const apiHandler = async (c) => {
             c.header('x-cache', 'hit');
         }
 
+        setEdgeCache(c, type);
+        const fillSong = query.fill === '1' && type === 'song';
+
         if (type === 'url') {
-            let url = data.url;
+            const url = postProcessUrl(server, data.url);
 
             if (!url) {
                 c.status(404);
@@ -236,29 +294,6 @@ export const apiHandler = async (c) => {
             }
             if (url.startsWith('@')) {
                 return c.text(url);
-            }
-
-            if (server === 'netease') {
-                url = url
-                    .replace('://m7c.', '://m7.')
-                    .replace('://m8c.', '://m8.')
-                    .replace('http://', 'https://');
-                if (url.includes('vuutv=')) {
-                    const tempUrl = new URL(url);
-                    tempUrl.search = '';
-                    url = tempUrl.toString();
-                }
-            }
-            if (server === 'tencent') {
-                url = url
-                    .replace('http://', 'https://')
-                    .replace('://ws.stream.qqmusic.qq.com', '://dl.stream.qqmusic.qq.com');
-            }
-            if (server === 'kugou') {
-                url = url
-                    .replace('http://', 'https://')
-                    .replace('://trackercdn.kugou.com', '://tracker.kugou.com')
-                    .replace('://media.store.kugou.com', '://media.kugou.com');
             }
 
             return c.redirect(url);
@@ -301,10 +336,14 @@ export const apiHandler = async (c) => {
                     picUrl = `${get_url(c)}?server=${server}&type=pic&id=${picId}`;
                 }
 
+                const audioUrl = urlId
+                    ? (fillSong ? await resolveAudioUrl(server, urlId, cookie) : `${get_url(c)}?server=${server}&type=url&id=${urlId}`)
+                    : '';
+
                 return c.json([{
                     title: songName,
                     author: artistName,
-                    url: urlId ? `${get_url(c)}?server=${server}&type=url&id=${urlId}` : '',
+                    url: audioUrl,
                     pic: picUrl,
                     lrc: lyricId ? `${get_url(c)}?server=${server}&type=lrc&id=${lyricId}` : ''
                 }]);
@@ -312,21 +351,24 @@ export const apiHandler = async (c) => {
             c.status(404);
             return c.json({ error: 'no data' });
         }
-        return c.json(data.map(x => {
+        return c.json(await Promise.all(data.map(async (x) => {
             let picUrl = '';
             if (server === 'kugou' && x.pic) {
                 picUrl = x.pic;
             } else if (x.pic_id) {
                 picUrl = `${get_url(c)}?server=${server}&type=pic&id=${x.pic_id}`;
             }
+            const audioUrl = x.url_id
+                ? (fillSong ? await resolveAudioUrl(server, x.url_id, cookie) : `${get_url(c)}?server=${server}&type=url&id=${x.url_id}`)
+                : '';
             return {
                 title: x.name,
                 author: Array.isArray(x.artist) ? x.artist.join(' / ') : x.artist,
-                url: x.url_id ? `${get_url(c)}?server=${server}&type=url&id=${x.url_id}` : '',
+                url: audioUrl,
                 pic: picUrl,
                 lrc: x.lyric_id ? `${get_url(c)}?server=${server}&type=lrc&id=${x.lyric_id}` : ''
             };
-        }));
+        })));
 
     } catch (error) {
         console.error('API Error:', error);
