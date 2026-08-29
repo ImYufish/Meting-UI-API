@@ -337,7 +337,12 @@ export const apiHandler = async (c) => {
                 } else if (data.trans_param && data.trans_param.union_cover) {
                     picUrl = data.trans_param.union_cover.replace('{size}', '400');
                 } else if (picId) {
-                    picUrl = `${get_url(c)}?server=${server}&type=pic&id=${picId}`;
+                    if (server === 'tencent') {
+                        // 同歌单分支：tencent 直接用 pic_id 拼 y.gtimg.cn CDN 直链，避免 type=pic 302 端点降级
+                        picUrl = `https://y.gtimg.cn/music/photo_new/T002R300x300M000${picId}.jpg`;
+                    } else {
+                        picUrl = `${get_url(c)}?server=${server}&type=pic&id=${picId}`;
+                    }
                 }
 
                 const audioUrl = urlId
@@ -362,12 +367,18 @@ export const apiHandler = async (c) => {
             if (server === 'kugou' && x.pic) {
                 picUrl = x.pic;
             } else if (x.trans_param && x.trans_param.union_cover) {
-                // tencent 歌单：直接用 QQ 音乐返回的 CDN 直链（y.gtimg.cn），无需再走 type=pic 的 302 端点。
-                // 前端 <img> 可直接显示；WebGL 纹理走代理时也只需代理回源这个 CDN，更稳。
+                // 单曲分支已用 union_cover 直出 CDN 直链（y.gtimg.cn）
                 picUrl = x.trans_param.union_cover.replace('{size}', '400');
             } else if (x.pic_id) {
-                // 兜底：仍给 type=pic 端点（会 302 跳 CDN），兼容无 union_cover 的来源（netease 等）
-                picUrl = `${get_url(c)}?server=${server}&type=pic&id=${x.pic_id}`;
+                if (server === 'tencent') {
+                    // tencent 歌单经 format(true) 后拿不到 union_cover，只有 pic_id（专辑 mid）。
+                    // 直接拼 y.gtimg.cn CDN 直链，避免走 type=pic 的 302 端点（该端点可能降级 404）。
+                    // 与 meting.pic(pic_id) 的产出一致：T002R300x300M000{pic_id}.jpg。
+                    picUrl = `https://y.gtimg.cn/music/photo_new/T002R300x300M000${x.pic_id}.jpg`;
+                } else {
+                    // 兜底：netease/kugou 等仍给 type=pic 端点（会 302 跳各自 CDN）
+                    picUrl = `${get_url(c)}?server=${server}&type=pic&id=${x.pic_id}`;
+                }
             }
             const audioUrl = x.url_id
                 ? (fillSong ? await resolveAudioUrl(server, x.url_id, cookie) : `${get_url(c)}?server=${server}&type=url&id=${x.url_id}`)
