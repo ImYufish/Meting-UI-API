@@ -10,7 +10,8 @@ import Meting from '@meting/core';
 import { HMAC_SECRET, ENABLE_AUTH } from '../../setting/hmac.js';
 
 // 可选:QQ 歌词代理。用于 Vercel 等海外节点绕过 QQ 音乐对 fcg_query_lyric_new.fcg 的境外 IP 限制。
-// 例如指向部署在国内的中转服务:https://你的代理域名
+// 代理代码已统一迁移到 edgeone 项目:edgeone/edge-functions/qq-lyric/[[default]].js(固定广州区域执行)。
+// LYRIC_PROXY 应设为该代理的部署域名 + /qq-lyric 前缀,例如(已验证可用):https://proxy-api.x1anyu.cn/qq-lyric
 // 留空则走默认直连(国内/无限制环境下正常工作)。
 const LYRIC_PROXY = process.env.LYRIC_PROXY || '';
 
@@ -360,7 +361,12 @@ export const apiHandler = async (c) => {
             let picUrl = '';
             if (server === 'kugou' && x.pic) {
                 picUrl = x.pic;
+            } else if (x.trans_param && x.trans_param.union_cover) {
+                // tencent 歌单：直接用 QQ 音乐返回的 CDN 直链（y.gtimg.cn），无需再走 type=pic 的 302 端点。
+                // 前端 <img> 可直接显示；WebGL 纹理走代理时也只需代理回源这个 CDN，更稳。
+                picUrl = x.trans_param.union_cover.replace('{size}', '400');
             } else if (x.pic_id) {
+                // 兜底：仍给 type=pic 端点（会 302 跳 CDN），兼容无 union_cover 的来源（netease 等）
                 picUrl = `${get_url(c)}?server=${server}&type=pic&id=${x.pic_id}`;
             }
             const audioUrl = x.url_id
